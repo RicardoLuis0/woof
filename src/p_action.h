@@ -152,4 +152,6 @@ void A_CheckAmmo(struct player_s *, struct pspdef_s *);
 void A_RefireTo(struct player_s *, struct pspdef_s *);
 void A_GunFlashTo(struct player_s *, struct pspdef_s *);
 
+// [Jay] Declarate codepointers
+void A_SpawnObjectNamed(struct mobj_s *);
 #endif

@@ -2871,17 +2871,13 @@ void A_LineEffect(mobj_t *mo)
 //   args[6]: Y velocity (fixed point)
 //   args[7]: Z velocity (fixed point)
 //
-void A_SpawnObject(mobj_t *actor)
+static void A_SpawnObjectImpl(mobj_t *actor, int type, int named_type)
 {
-  int type, angle, ofs_x, ofs_y, ofs_z, vel_x, vel_y, vel_z;
+  int angle, ofs_x, ofs_y, ofs_z, vel_x, vel_y, vel_z;
   angle_t an;
   int fan, dx, dy;
   mobj_t *mo;
 
-  if (!mbf21 || !actor->state->args[0])
-    return;
-
-  type  = actor->state->args[0] - 1;
   angle = actor->state->args[1];
   ofs_x = actor->state->args[2];
   ofs_y = actor->state->args[3];
@@ -2897,7 +2893,7 @@ void A_SpawnObject(mobj_t *actor)
   dy = FixedMul(ofs_x, finesine[fan]  ) + FixedMul(ofs_y, finecosine[fan]);
 
   // spawn it, yo
-  mo = P_SpawnMobj(actor->x + dx, actor->y + dy, actor->z + ofs_z, type, 0); // TODO [Jay] allow A_SpawnObject to work with named types
+  mo = P_SpawnMobj(actor->x + dx, actor->y + dy, actor->z + ofs_z, type, named_type);
   if (!mo)
     return;
 
@@ -2928,6 +2924,20 @@ void A_SpawnObject(mobj_t *actor)
 
   // [XA] don't bother with the dont-inherit-friendliness hack
   // that exists in A_Spawn, 'cause WTF is that about anyway?
+}
+
+void A_SpawnObject(mobj_t *actor)
+{
+    if (!mbf21 || !actor->state->args[0])
+        return;
+    A_SpawnObjectImpl(actor, actor->state->args[0] - 1, TYPE_NULL);
+}
+
+void A_SpawnObjectNamed(mobj_t *actor)
+{
+    if (!mbf21 || !actor->state->args[0])
+        return;
+    A_SpawnObjectImpl(actor, MT_NAMEDTYPE, actor->state->args[0]);
 }
 
 //
