@@ -1490,11 +1490,11 @@ boolean P_CheckMissileSpawn (mobj_t* th)
 // P_SpawnMissile
 //
 
-mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
+mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type, int named_type)
 {
   angle_t an;
   int     dist;
-  mobj_t *th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type, 0); // TODO [Jay] allow P_SpawnMissile to work with named types
+  mobj_t *th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type, named_type);
 
   if (th->info->seesound)
     S_StartSound (th, th->info->seesound);
