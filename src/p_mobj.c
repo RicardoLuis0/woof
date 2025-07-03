@@ -1532,7 +1532,7 @@ int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
 // Tries to aim at a nearby monster
 //
 
-mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
+mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type, int named_type)
 {
   mobj_t *th;
   fixed_t x, y, z, slope = 0;
@@ -1568,7 +1568,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   y = source->y;
   z = source->z + 4*8*FRACUNIT;
 
-  th = P_SpawnMobj (x,y,z, type, 0); // TODO [Jay] allow P_SpawnPlayerMissile to work with named types
+  th = P_SpawnMobj (x,y,z, type, 0);
 
   if (th->info->seesound)
     S_StartSoundMissile(source, th, th->info->seesound);

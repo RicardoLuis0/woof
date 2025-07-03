@@ -779,7 +779,7 @@ void A_Saw(player_t *player, pspdef_t *psp)
 void A_FireMissile(player_t *player, pspdef_t *psp)
 {
   P_SubtractAmmo(player, 1);
-  P_SpawnPlayerMissile(player->mo, MT_ROCKET);
+  P_SpawnPlayerMissile(player->mo, MT_ROCKET, 0);
 }
 
 //
@@ -789,7 +789,7 @@ void A_FireMissile(player_t *player, pspdef_t *psp)
 void A_FireBFG(player_t *player, pspdef_t *psp)
 {
   P_SubtractAmmo(player, BFGCELLS);
-  P_SpawnPlayerMissile(player->mo, MT_BFG);
+  P_SpawnPlayerMissile(player->mo, MT_BFG, 0);
 }
 
 //
@@ -882,7 +882,7 @@ void A_FirePlasma(player_t *player, pspdef_t *psp)
 
   // killough 7/11/98: emulate Doom's beta version, which alternated fireballs
   P_SpawnPlayerMissile(player->mo, beta_emulation ?
-		       player->refire&1 ? MT_PLASMA2 : MT_PLASMA1 : MT_PLASMA);
+		       player->refire&1 ? MT_PLASMA2 : MT_PLASMA1 : MT_PLASMA, 0);
 }
 
 //
@@ -1203,22 +1203,18 @@ void P_MovePsprites(player_t *player)
 //   args[3]: X/Y spawn offset, relative to calling player's angle
 //   args[4]: Z spawn offset, relative to player's default projectile fire height
 //
-void A_WeaponProjectile(player_t *player, pspdef_t *psp)
+void A_WeaponProjectileImpl(player_t *player, pspdef_t *psp, int type, int named_type)
 {
-  int type, angle, pitch, spawnofs_xy, spawnofs_z;
+  int angle, pitch, spawnofs_xy, spawnofs_z;
   mobj_t *mo;
   int an;
 
-  if (!mbf21 || !psp->state || !psp->state->args[0])
-    return;
-
-  type        = psp->state->args[0] - 1;
   angle       = psp->state->args[1];
   pitch       = psp->state->args[2];
   spawnofs_xy = psp->state->args[3];
   spawnofs_z  = psp->state->args[4];
 
-  mo = P_SpawnPlayerMissile(player->mo, type);
+  mo = P_SpawnPlayerMissile(player->mo, type, named_type);
   if (!mo)
     return;
 
@@ -1242,6 +1238,22 @@ void A_WeaponProjectile(player_t *player, pspdef_t *psp)
   // so player seeker missiles prioritizing the
   // baddie the player is actually aiming at. ;)
   mo->tracer = linetarget;
+}
+
+void A_WeaponProjectile(player_t *player, pspdef_t *psp)
+{
+    if (!mbf21 || !psp->state || !psp->state->args[0])
+        return;
+
+    A_WeaponProjectileImpl(player, psp, psp->state->args[0] - 1, TYPE_NULL);
+}
+
+void A_WeaponProjectileNamed(player_t *player, pspdef_t *psp)
+{
+    if (!mbf21 || !psp->state || !psp->state->args[0])
+        return;
+
+    A_WeaponProjectileImpl(player, psp, MT_NAMEDTYPE, psp->state->args[0]);
 }
 
 //
