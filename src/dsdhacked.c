@@ -400,6 +400,9 @@ static void InitMobjInfo(void)
     mobjinfo = original_mobjinfo;
     num_mobj_types = NUMMOBJTYPES;
     mobj_index = NUMMOBJTYPES - 1;
+    array_grow(namedmobjs, 1);
+
+    memset(namedmobjs, 0, sizeof(mobjinfo_t)); // namedmobjs[0] is the invalid type, so just have it as zero
 }
 
 void dsdh_EnsureMobjInfoCapacity(int limit)

@@ -48,6 +48,7 @@
 #include "v_video.h"
 #include "z_zone.h"
 #include "i_system.h"
+#include "m_array.h"
 
 boolean direct_vertical_aiming, default_direct_vertical_aiming;
 int max_pitch_angle = 32 * ANG1, default_max_pitch_angle;
@@ -834,10 +835,10 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int type_n
   if(type == MT_NAMEDTYPE && type_name == TYPE_NULL)
   {
     I_Error("Trying to spawn mobj without a valid type");
-    return;
+    return NULL;
   }
 
-  mobjinfo_t *info = type == MT_NAMEDTYPE ? &namedmobjs[type_name] : &mobjinfo[type];
+  mobjinfo_t *info = (type == MT_NAMEDTYPE) ? &namedmobjs[type_name] : &mobjinfo[type];
   state_t    *st;
 
   memset(mobj, 0, sizeof *mobj);
@@ -1020,29 +1021,67 @@ mobj_t *P_SubstNullMobj(mobj_t *mobj)
 // killough 8/24/98: rewrote to use hashing
 //
 
-int P_FindDoomedNum(unsigned type, int *type_name)
-{ // TODO [Jay] allow P_FindDoomedNum to work with named types
-  static struct { int first, next; } *hash;
-  register int i;
+#define DOOMEDNUM_HASH_SIZE 1024
 
-  if (!hash)
+typedef struct
+{
+    int ednum;
+    int type;
+    int type_name;
+} DoomedNumEntry;
+
+DoomedNumEntry* DoomedNumHash[DOOMEDNUM_HASH_SIZE];
+bool hash_initialized = false;
+
+int P_FindDoomedNum(unsigned type, int *type_name)
+{
+    if (!hash_initialized)
     {
-      hash = Z_Malloc(sizeof *hash * num_mobj_types, PU_CACHE, (void **) &hash);
-      for (i=0; i<num_mobj_types; i++)
-	hash[i].first = num_mobj_types;
-      for (i=0; i<num_mobj_types; i++)
-	if (mobjinfo[i].doomednum != -1)
-	  {
-	    unsigned h = (unsigned) mobjinfo[i].doomednum % num_mobj_types;
-	    hash[i].next = hash[h].first;
-	    hash[h].first = i;
-	  }
+        hash_initialized = true;
+
+        for (int i = 0; i < num_mobj_types; i++)
+        {
+            if(mobjinfo[i].doomednum != 0)
+            {
+                DoomedNumEntry * arr = DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE];
+                array_push(arr, ((DoomedNumEntry){mobjinfo[i].doomednum, i, 0}));
+                DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE] = arr;
+            }
+        }
+
+        int n = array_size(namedmobjs);
+
+        for(int i = 1; i < n; i++)
+        {
+            if(namedmobjs[i].doomednum != 0)
+            {
+                DoomedNumEntry * arr = DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE];
+                array_push(arr, ((DoomedNumEntry){namedmobjs[i].doomednum, MT_NAMEDTYPE, i}));
+                DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE] = arr;
+            }
+        }
     }
   
-  i = hash[type % num_mobj_types].first;
-  while (i < num_mobj_types && mobjinfo[i].doomednum != type)
-    i = hash[i].next;
-  return i;
+    DoomedNumEntry * arr = DoomedNumHash[type % DOOMEDNUM_HASH_SIZE];
+
+    if(arr)
+    {
+        int n = array_size(arr);
+        for(int i = 0; i < n; i++)
+        {
+            if(arr[i].ednum == type)
+            {
+                if(arr[i].type == MT_NAMEDTYPE && !type_name)
+                { // found ednum, but caller doesn't support named types
+                    return num_mobj_types;
+                }
+                
+                if(type_name) *type_name = arr[i].type_name;
+                return arr[i].type;
+            }
+        }
+    }
+    return num_mobj_types;
 }
 
 //
@@ -1284,7 +1323,7 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   int type_name = TYPE_NULL;
   // killough 8/23/98: use table for faster lookup
-  i = P_FindDoomedNum(mthing->type, type_name);
+  i = P_FindDoomedNum(mthing->type, &type_name);
 
   // phares 5/16/98:
   // Do not abort because of an unknown thing. Ignore it, but post a
