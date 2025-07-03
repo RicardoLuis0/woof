@@ -47,6 +47,7 @@
 #include "tables.h"
 #include "v_video.h"
 #include "z_zone.h"
+#include "i_system.h"
 
 boolean direct_vertical_aiming, default_direct_vertical_aiming;
 int max_pitch_angle = 32 * ANG1, default_max_pitch_angle;
@@ -669,7 +670,7 @@ void P_NightmareRespawn(mobj_t* mobj)
   // because of removal of the body?
 
   mo = P_SpawnMobj(mobj->x, mobj->y,
-		   mobj->subsector->sector->floorheight, MT_TFOG);
+		   mobj->subsector->sector->floorheight, MT_TFOG, 0);
 
   // initiate teleport sound
 
@@ -679,7 +680,7 @@ void P_NightmareRespawn(mobj_t* mobj)
 
   ss = R_PointInSubsector (x,y);
 
-  mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG);
+  mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG, 0);
 
   S_StartSound (mo, sfx_telept);
 
@@ -690,7 +691,7 @@ void P_NightmareRespawn(mobj_t* mobj)
 
   // inherit attributes from deceased one
 
-  mo = P_SpawnMobj (x,y,z, mobj->type);
+  mo = P_SpawnMobj (x,y,z, mobj->type, mobj->type_name);
   mo->spawnpoint = mobj->spawnpoint;
   mo->angle = ANG45 * (mthing->angle/45);
 
@@ -827,15 +828,22 @@ void P_MobjThinker (mobj_t* mobj)
 // P_SpawnMobj
 //
 
-mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
+mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int type_name)
 {
   mobj_t *mobj = Z_Malloc(sizeof *mobj, PU_LEVEL, NULL);
-  mobjinfo_t *info = &mobjinfo[type];
+  if(type == MT_NAMEDTYPE && type_name == TYPE_NULL)
+  {
+    I_Error("Trying to spawn mobj without a valid type");
+    return;
+  }
+
+  mobjinfo_t *info = type == MT_NAMEDTYPE ? &namedmobjs[type_name] : &mobjinfo[type];
   state_t    *st;
 
   memset(mobj, 0, sizeof *mobj);
 
   mobj->type = type;
+  mobj->type_name = type_name;
   mobj->info = info;
   mobj->x = x;
   mobj->y = y;
@@ -1012,8 +1020,8 @@ mobj_t *P_SubstNullMobj(mobj_t *mobj)
 // killough 8/24/98: rewrote to use hashing
 //
 
-int P_FindDoomedNum(unsigned type)
-{
+int P_FindDoomedNum(unsigned type, int *type_name)
+{ // TODO [Jay] allow P_FindDoomedNum to work with named types
   static struct { int first, next; } *hash;
   register int i;
 
@@ -1063,18 +1071,19 @@ void P_RespawnSpecials (void)
   // spawn a teleport fog at the new spot
 
   ss = R_PointInSubsector (x,y);
-  mo = P_SpawnMobj(x, y, ss->sector->floorheight , MT_IFOG);
+  mo = P_SpawnMobj(x, y, ss->sector->floorheight , MT_IFOG, 0);
   S_StartSound(mo, sfx_itmbk);
 
   // find which type to spawn
 
   // killough 8/23/98: use table for faster lookup
-  i = P_FindDoomedNum(mthing->type);
+  int type_name = TYPE_NULL;
+  i = P_FindDoomedNum(mthing->type, &type_name);
 
   // spawn it
   z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
-  mo = P_SpawnMobj(x,y,z, i);
+  mo = P_SpawnMobj(x,y,z, i, type_name);
   mo->spawnpoint = *mthing;
   mo->angle = ANG45 * (mthing->angle/45);
 
@@ -1110,7 +1119,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   x    = mthing->x << FRACBITS;
   y    = mthing->y << FRACBITS;
   z    = ONFLOORZ;
-  mobj = P_SpawnMobj (x,y,z, MT_PLAYER);
+  mobj = P_SpawnMobj (x,y,z, MT_PLAYER, 0);
 
   // set color translations for player sprites
 
@@ -1273,8 +1282,9 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   // find which type to spawn
 
+  int type_name = TYPE_NULL;
   // killough 8/23/98: use table for faster lookup
-  i = P_FindDoomedNum(mthing->type);
+  i = P_FindDoomedNum(mthing->type, type_name);
 
   // phares 5/16/98:
   // Do not abort because of an unknown thing. Ignore it, but post a
@@ -1307,7 +1317,7 @@ spawnit:
 
   // Because of DSDHacked, allow `i` values outside enum mobjtype_t range
   // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
-  mobj = P_SpawnMobj (x,y,z, i);
+  mobj = P_SpawnMobj (x,y,z, i, type_name);
   mobj->spawnpoint = *mthing;
 
   if (mobj->tics > 0)
@@ -1358,7 +1368,7 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
   int t = P_Random(pr_spawnpuff);
   z += (t - P_Random(pr_spawnpuff))<<10;
 
-  th = P_SpawnMobj (x,y,z, MT_PUFF);
+  th = P_SpawnMobj (x,y,z, MT_PUFF, 0);
   th->momz = FRACUNIT;
   th->tics -= P_Random(pr_spawnpuff)&3;
 
@@ -1384,7 +1394,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
   // killough 5/5/98: remove dependence on order of evaluation:
   int t = P_Random(pr_spawnblood);
   z += (t - P_Random(pr_spawnblood))<<10;
-  th = P_SpawnMobj(x,y,z, MT_BLOOD);
+  th = P_SpawnMobj(x,y,z, MT_BLOOD, 0);
   th->momz = FRACUNIT*2;
   th->tics -= P_Random(pr_spawnblood)&3;
   if (bleeder->info->bloodcolor)
@@ -1445,7 +1455,7 @@ mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
 {
   angle_t an;
   int     dist;
-  mobj_t *th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type);
+  mobj_t *th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type, 0); // TODO [Jay] allow P_SpawnMissile to work with named types
 
   if (th->info->seesound)
     S_StartSound (th, th->info->seesound);
@@ -1519,7 +1529,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   y = source->y;
   z = source->z + 4*8*FRACUNIT;
 
-  th = P_SpawnMobj (x,y,z, type);
+  th = P_SpawnMobj (x,y,z, type, 0); // TODO [Jay] allow P_SpawnPlayerMissile to work with named types
 
   if (th->info->seesound)
     S_StartSoundMissile(source, th, th->info->seesound);

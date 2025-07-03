@@ -1521,7 +1521,7 @@ void A_Tracer(mobj_t *actor)
 
   th = P_SpawnMobj (actor->x-actor->momx,
                     actor->y-actor->momy,
-                    actor->z, MT_SMOKE);
+                    actor->z, MT_SMOKE, 0);
 
   th->momz = FRACUNIT;
   th->tics -= P_Random(pr_tracer) & 3;
@@ -1872,7 +1872,7 @@ void A_VileTarget(mobj_t *actor)
   // killough 12/98: fix Vile fog coordinates
   fog = P_SpawnMobj(actor->target->x,
                     demo_version < DV_MBF ? actor->target->x : actor->target->y,
-                    actor->target->z,MT_FIRE);
+                    actor->target->z, MT_FIRE, 0);
 
   P_SetTarget(&actor->tracer, fog);   // killough 11/98
   P_SetTarget(&fog->target, actor);
@@ -2103,7 +2103,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
   z = actor->z + 8*FRACUNIT;
 
   if (comp[comp_skull])   // killough 10/98: compatibility-optioned
-    newmobj = P_SpawnMobj(x, y, z, MT_SKULL);                     // phares
+    newmobj = P_SpawnMobj(x, y, z, MT_SKULL, 0);                     // phares
   else                                                            //   V
     {
       // Check whether the Lost Soul is being fired through a 1-sided
@@ -2115,7 +2115,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
       if (Check_Sides(actor,x,y))
         return;
 
-      newmobj = P_SpawnMobj(x, y, z, MT_SKULL);
+      newmobj = P_SpawnMobj(x, y, z, MT_SKULL, 0);
 
       // Check to see if the new Lost Soul's z value is above the
       // ceiling of its new sector, or below the floor. If so, kill it.
@@ -2587,7 +2587,7 @@ void A_BrainScream(mobj_t *mo)
     {
       int y = mo->y - 320*FRACUNIT;
       int z = 128 + P_Random(pr_brainscream)*2*FRACUNIT;
-      mobj_t *th = P_SpawnMobj (x,y,z, MT_ROCKET);
+      mobj_t *th = P_SpawnMobj (x,y,z, MT_ROCKET, 0);
       th->momz = P_Random(pr_brainscream)*512;
       P_SetMobjState(th, S_BRAINEXPLODE1);
       th->tics -= P_Random(pr_brainscream)&7;
@@ -2603,7 +2603,7 @@ void A_BrainExplode(mobj_t *mo)
   int x = mo->x + (t - P_Random(pr_brainexp))*2048;
   int y = mo->y;
   int z = 128 + P_Random(pr_brainexp)*2*FRACUNIT;
-  mobj_t *th = P_SpawnMobj(x,y,z, MT_ROCKET);
+  mobj_t *th = P_SpawnMobj(x,y,z, MT_ROCKET, 0);
   th->momz = P_Random(pr_brainexp)*512;
   P_SetMobjState(th, S_BRAINEXPLODE1);
   th->tics -= P_Random(pr_brainexp)&7;
@@ -2679,7 +2679,7 @@ void A_SpawnFly(mobj_t *mo)
   targ = P_SubstNullMobj(mo->target);
 
   // First spawn teleport fog.
-  fog = P_SpawnMobj(targ->x, targ->y, targ->z, MT_SPAWNFIRE);
+  fog = P_SpawnMobj(targ->x, targ->y, targ->z, MT_SPAWNFIRE, 0);
 
   S_StartSound(fog, sfx_telept);
 
@@ -2710,7 +2710,7 @@ void A_SpawnFly(mobj_t *mo)
   else
     type = MT_BRUISER;
 
-  newmobj = P_SpawnMobj(targ->x, targ->y, targ->z, type);
+  newmobj = P_SpawnMobj(targ->x, targ->y, targ->z, type, 0);
 
   // killough 7/18/98: brain friendliness is transferred
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
@@ -2780,7 +2780,7 @@ void A_Spawn(mobj_t *mo)
     {
       mobj_t *newmobj = P_SpawnMobj(mo->x, mo->y, 
 				    (mo->state->misc2 << FRACBITS) + mo->z, 
-				    mo->state->misc1 - 1);
+				    mo->state->misc1 - 1, 0); // TODO [Jay] allow A_Spawn to work with named types
 
       if (comp[comp_friendlyspawn])
       {
@@ -2897,7 +2897,7 @@ void A_SpawnObject(mobj_t *actor)
   dy = FixedMul(ofs_x, finesine[fan]  ) + FixedMul(ofs_y, finecosine[fan]);
 
   // spawn it, yo
-  mo = P_SpawnMobj(actor->x + dx, actor->y + dy, actor->z + ofs_z, type);
+  mo = P_SpawnMobj(actor->x + dx, actor->y + dy, actor->z + ofs_z, type, 0); // TODO [Jay] allow A_SpawnObject to work with named types
   if (!mo)
     return;
 

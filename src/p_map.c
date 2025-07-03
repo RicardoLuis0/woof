@@ -2084,7 +2084,7 @@ boolean PIT_ChangeSector(mobj_t *thing)
       // spray blood in a random direction
       mo = P_SpawnMobj (thing->x,
 			thing->y,
-			thing->z + thing->height/2, MT_BLOOD);
+			thing->z + thing->height/2, MT_BLOOD, 0);
 
       if (thing->info->bloodcolor)
       {

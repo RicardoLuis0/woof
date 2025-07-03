@@ -1285,7 +1285,8 @@ extern char *original_sprnames[];             // 1/17/98 killough
 // Note that many of these are generically named for the ornamentals
 //
 typedef enum {
-  MT_NULL = -1, // null/invalid mobj (zero is reserved for MT_PLAYER)
+  //MT_NULL = -1,
+  MT_NAMEDTYPE = -1, // null/invalid/declarate mobj (zero is reserved for MT_PLAYER) (null/invalid have typename of 0)
   MT_PLAYER,
   MT_POSSESSED,
   MT_SHOTGUY,
@@ -1435,9 +1436,13 @@ typedef enum {
 
   MT_MUSICSOURCE, // [crispy] support MUSINFO lump (dynamic music changing)
 
-  NUMMOBJTYPES  // Counter of how many there are
+  NUMMOBJTYPES,  // Counter of how many there are
 
 } mobjtype_t;
+
+enum {
+    TYPE_NULL = 0,
+};
 
 typedef enum {
   IG_DEFAULT,
@@ -1525,6 +1530,8 @@ typedef struct
     mobjtype_t droppeditem; // mobj to drop after death
     // [FG] Obituaries
     char *obituary, *obituary_melee;
+
+    int droppeditem_type;
 } mobjinfo_t;
 
 #define NO_ALTSPEED -1
@@ -1538,6 +1545,7 @@ extern int num_states;
 extern char** sprnames;
 extern int num_sprites;
 extern mobjinfo_t* mobjinfo;
+extern mobjinfo_t* namedmobjs;
 extern int num_mobj_types;
 
 // ZDoom

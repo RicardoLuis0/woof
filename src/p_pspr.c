@@ -858,7 +858,7 @@ void A_FireOldBFG(player_t *player, pspdef_t *psp)
 
       th = P_SpawnMobj(mo->x, mo->y,
 		       mo->z + 62*FRACUNIT - player->psprites[ps_weapon].sy,
-		       type);
+		       type, 0);
       P_SetTarget(&th->target, mo);
       th->angle = an1;
       th->momx = finecosine[an1>>ANGLETOFINESHIFT] * 25;
@@ -1075,7 +1075,7 @@ void A_BFGSpray(mobj_t *mo)
         continue;
 
       P_SpawnMobj(linetarget->x, linetarget->y,
-                  linetarget->z + (linetarget->height>>2), MT_EXTRABFG);
+                  linetarget->z + (linetarget->height>>2), MT_EXTRABFG, 0);
 
       for (damage=j=0; j<15; j++)
         damage += (P_Random(pr_bfg)&7) + 1;

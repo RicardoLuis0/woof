@@ -390,7 +390,8 @@ static void FreeMusic(void)
 //
 #include "p_map.h" // MELEERANGE
 
-mobjinfo_t *mobjinfo = NULL;
+mobjinfo_t * namedmobjs = NULL;
+mobjinfo_t * mobjinfo = NULL;
 int num_mobj_types;
 static int mobj_index;
 
@@ -435,7 +436,8 @@ void dsdh_EnsureMobjInfoCapacity(int limit)
 
     for (int i = old_num_mobj_types; i < num_mobj_types; ++i)
     {
-        mobjinfo[i].droppeditem = MT_NULL;
+        mobjinfo[i].droppeditem = MT_NAMEDTYPE;
+        mobjinfo[i].droppeditem_type = TYPE_NULL;
         mobjinfo[i].infighting_group = IG_DEFAULT;
         mobjinfo[i].projectile_group = PG_DEFAULT;
         mobjinfo[i].splash_group = SG_DEFAULT;

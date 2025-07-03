@@ -391,6 +391,9 @@ typedef struct mobj_s
 
     // [FG] height of the sprite in pixels
     int actualheight;
+
+    // [Jay] typename for delcarate, 0 is null type
+    int type_name;
 } mobj_t;
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
@@ -434,7 +437,7 @@ void P_UpdateCheckSight(void);
 
 mobj_t *P_SubstNullMobj(mobj_t *mobj);
 void    P_RespawnSpecials(void);
-mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
+mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int typename);
 void    P_RemoveMobj(mobj_t *th);
 boolean P_SetMobjState(mobj_t *mobj, statenum_t state);
 void    P_MobjThinker(mobj_t *mobj);

@@ -781,13 +781,17 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
   // This determines the kind of object spawned
   // during the death frame of a thing.
 
-  if (target->info->droppeditem != MT_NULL)
+  int namedtype = 0;
+
+  if (!(target->info->droppeditem == MT_NAMEDTYPE && target->info->droppeditem_type == TYPE_NULL))
   {
     item = target->info->droppeditem;
+    namedtype = target->info->droppeditem_type;
+
   }
   else return;
 
-  mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item);
+  mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item, namedtype);
   mo->flags |= MF_DROPPED;    // special versions of items
 }
 

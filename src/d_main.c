@@ -1536,7 +1536,8 @@ static void D_InitTables(void)
     // [Woof!]
     mobjinfo[i].bloodcolor       = 0; // Normal
     // DEHEXTRA
-    mobjinfo[i].droppeditem      = MT_NULL;
+    mobjinfo[i].droppeditem      = MT_NAMEDTYPE;
+    mobjinfo[i].droppeditem_type = TYPE_NULL;
   }
 
   mobjinfo[MT_VILE].flags2    = MF2_SHORTMRANGE | MF2_DMGIGNORED | MF2_NOTHRESHOLD;
