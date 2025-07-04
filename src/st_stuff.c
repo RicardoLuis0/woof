@@ -511,7 +511,7 @@ static int CalcPainOffset(sbe_face_t *face, player_t *player)
 static int DeadFace(player_t *player)
 {
     const int state =
-        (player->mo->state - states) - mobjinfo[player->mo->type].xdeathstate;
+        (player->mo->state - states) - player->mo->info->xdeathstate;
 
     // [FG] support face gib animations as in the 3DO/Jaguar/PSX ports
     if (have_xdthfaces && state >= 0)

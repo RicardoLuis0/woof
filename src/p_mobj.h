@@ -453,6 +453,12 @@ void    P_ExplodeMissile(mobj_t*);    // killough
 
 boolean P_SeekerMissile(mobj_t *actor, mobj_t **seekTarget, angle_t thresh, angle_t turnMax, boolean seekcenter);
 int     P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
+
+inline mobjinfo_t *get_info(int type, int named_type)
+{
+    return (type == MT_NAMEDTYPE) ? &namedmobjs[named_type] : &mobjinfo[type];
+}
+
 #endif
 
 //----------------------------------------------------------------------------

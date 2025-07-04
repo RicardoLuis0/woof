@@ -811,8 +811,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *target, method_t mod)
 static boolean P_InfightingImmune(mobj_t *target, mobj_t *source)
 {
   return // not default behaviour, and same group
-    mobjinfo[target->type].infighting_group != IG_DEFAULT &&
-    mobjinfo[target->type].infighting_group == mobjinfo[source->type].infighting_group;
+    target->info->infighting_group != IG_DEFAULT &&
+    target->info->infighting_group == source->info->infighting_group;
 }
 
 void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage, method_t mod)

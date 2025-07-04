@@ -139,7 +139,7 @@ void P_ExplodeMissile (mobj_t* mo)
 
   mo->momx = mo->momy = mo->momz = 0;
 
-  P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
+  P_SetMobjState(mo, mo->info->deathstate);
 
   mo->tics -= P_Random(pr_explode)&3;
 
@@ -838,7 +838,7 @@ mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int type_n
     return NULL;
   }
 
-  mobjinfo_t *info = (type == MT_NAMEDTYPE) ? &namedmobjs[type_name] : &mobjinfo[type];
+  mobjinfo_t *info = get_info(type, type_name);
   state_t    *st;
 
   memset(mobj, 0, sizeof *mobj);
@@ -1120,7 +1120,7 @@ void P_RespawnSpecials (void)
   i = P_FindDoomedNum(mthing->type, &type_name);
 
   // spawn it
-  z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
+  z = get_info(i, type_name)->flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
   mo = P_SpawnMobj(x,y,z, i, type_name);
   mo->spawnpoint = *mthing;
@@ -1325,6 +1325,8 @@ void P_SpawnMapThing (mapthing_t* mthing)
   // killough 8/23/98: use table for faster lookup
   i = P_FindDoomedNum(mthing->type, &type_name);
 
+  mobjinfo_t *mi = get_info(i, type_name);
+
   // phares 5/16/98:
   // Do not abort because of an unknown thing. Ignore it, but post a
   // warning message for the player.
@@ -1338,12 +1340,12 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   // don't spawn keycards and players in deathmatch
 
-  if (deathmatch && mobjinfo[i].flags & MF_NOTDMATCH)
+  if (deathmatch && mi->flags & MF_NOTDMATCH)
     return;
 
   // don't spawn any monsters if -nomonsters
 
-  if (nomonsters && (i == MT_SKULL || (mobjinfo[i].flags & MF_COUNTKILL)))
+  if (nomonsters && (i == MT_SKULL || (mi->flags & MF_COUNTKILL)))
     return;
 
   // spawn it
@@ -1352,7 +1354,7 @@ spawnit:
   x = mthing->x << FRACBITS;
   y = mthing->y << FRACBITS;
 
-  z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
+  z = mi->flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
   // Because of DSDHacked, allow `i` values outside enum mobjtype_t range
   // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
