@@ -390,6 +390,8 @@ static void FreeMusic(void)
 //
 #include "p_map.h" // MELEERANGE
 
+char ** namelist = NULL;
+int * nametypelist = NULL;
 mobjinfo_t * namedmobjs = NULL;
 mobjinfo_t * mobjinfo = NULL;
 int num_mobj_types;
@@ -400,9 +402,64 @@ static void InitMobjInfo(void)
     mobjinfo = original_mobjinfo;
     num_mobj_types = NUMMOBJTYPES;
     mobj_index = NUMMOBJTYPES - 1;
-    array_grow(namedmobjs, 1);
 
-    memset(namedmobjs, 0, sizeof(mobjinfo_t)); // namedmobjs[0] is the invalid type, so just have it as zero
+    array_push(namedmobjs, ((mobjinfo_t){0})); // thing 0 = null thing
+    array_push(namelist, NULL); // name 0 = null
+    array_push(nametypelist, 0); // null string = null thing
+}
+
+int LookupNameIndex(const char * name)
+{
+    int n = array_size(namelist);
+    for(int i = 1; i < n; i++)
+    { // TODO change this to a hashmap if it turns out to be slow enough to matter
+        if(strcasecmp(name, namelist[i]) == 0)
+        {
+            return i;
+        }
+    }
+    //no name found, allocate new one
+    char * nam = strdup(name);
+    array_push(namelist, nam);
+    array_push(nametypelist, 0); // don't assign a thing just yet, but reserve the spot
+}
+
+int LookupTypeIndex(int nameIndex)
+{
+    if(nameIndex <= 0 || nameIndex >= array_size(nametypelist))
+    {
+        return 0;
+    }
+    return nametypelist[nameIndex];
+}
+
+int declarate_NewNamedMobj(int nameIndex)
+{
+    if(nameIndex <= 0 || nameIndex >= array_size(nametypelist))
+    {
+        I_Error("invalid name index %d for declarate_NewNamedMobj", nameIndex);
+    }
+
+    if(nametypelist[nameIndex])
+    {
+        I_Error("thing named '%s' already exists", namelist[nameIndex]);
+    }
+
+    int n = array_size(namedmobjs);
+
+    nametypelist[nameIndex] = n;
+
+    array_push(namedmobjs, ((mobjinfo_t){
+        .droppeditem = MT_NAMEDTYPE,
+        .droppeditem_type = TYPE_NULL,
+        .infighting_group = IG_DEFAULT,
+        .projectile_group = PG_DEFAULT,
+        .splash_group = SG_DEFAULT,
+        .altspeed = NO_ALTSPEED,
+        .meleerange = MELEERANGE
+    }));
+
+    return n;
 }
 
 void dsdh_EnsureMobjInfoCapacity(int limit)

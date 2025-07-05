@@ -2937,7 +2937,12 @@ void A_SpawnObjectNamed(mobj_t *actor)
 {
     if (!mbf21 || !actor->state->args[0])
         return;
-    A_SpawnObjectImpl(actor, MT_NAMEDTYPE, actor->state->args[0]);
+    int type = LookupTypeIndex(actor->state->args[0]);
+
+    if(!type)
+        return;
+
+    A_SpawnObjectImpl(actor, MT_NAMEDTYPE, type);
 }
 
 //
@@ -2998,7 +3003,13 @@ void A_MonsterProjectileNamed(mobj_t *actor)
 {
     if (!mbf21 || !actor->target || !actor->state->args[0])
         return;
-    A_MonsterProjectileImpl(actor, MT_NAMEDTYPE, actor->state->args[0]);
+
+    int type = LookupTypeIndex(actor->state->args[0]);
+
+    if(!type)
+        return;
+
+    A_MonsterProjectileImpl(actor, MT_NAMEDTYPE, type);
 }
 
 //

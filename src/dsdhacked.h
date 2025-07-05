@@ -38,4 +38,6 @@ extern byte *defined_codeptr_args;
 extern union actionf_u *deh_codeptr;
 extern statenum_t *seenstate_tab;
 
+int declarate_NewNamedMobj(int nameIndex);
+
 #endif

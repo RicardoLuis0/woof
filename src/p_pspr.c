@@ -1253,7 +1253,12 @@ void A_WeaponProjectileNamed(player_t *player, pspdef_t *psp)
     if (!mbf21 || !psp->state || !psp->state->args[0])
         return;
 
-    A_WeaponProjectileImpl(player, psp, MT_NAMEDTYPE, psp->state->args[0]);
+    int type = LookupTypeIndex(psp->state->args[0]);
+
+    if(!type)
+        return;
+
+    A_WeaponProjectileImpl(player, psp, MT_NAMEDTYPE, type);
 }
 
 //

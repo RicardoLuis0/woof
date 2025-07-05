@@ -1545,7 +1545,14 @@ extern int num_states;
 extern char** sprnames;
 extern int num_sprites;
 extern mobjinfo_t* mobjinfo;
+
+extern char ** namelist;
+extern int * nametypelist;
 extern mobjinfo_t* namedmobjs;
+
+int LookupNameIndex(const char * name); // string -> name index
+int LookupTypeIndex(int nameIndex); // name index -> type index
+
 extern int num_mobj_types;
 
 // ZDoom
