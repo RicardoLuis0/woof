@@ -44,14 +44,13 @@ void DEH_InitMusic(void)
     S_music = original_S_music;
     num_music = NUMMUSIC;
 
-    array_grow(deh_musicnames, num_music);
+    array_grow_size(deh_musicnames, num_music);
     for (int i = 1; i < num_music; i++)
     {
         deh_musicnames[i] = S_music[i].name ? strdup(S_music[i].name) : NULL;
     }
 
-    array_grow(music_state, num_music);
-    memset(music_state, 0, num_music * sizeof(*music_state));
+    array_grow_size(music_state, num_music);
 }
 
 void DEH_FreeMusic(void)
@@ -78,7 +77,7 @@ int DEH_MusicGetIndex(const char *key, int length)
 
 int DEH_MusicGetOriginalIndex(const char *key)
 {
-    for (int i = 1; i < array_capacity(deh_musicnames); ++i)
+    for (int i = 1; i < array_size(deh_musicnames); ++i)
     {
         if (deh_musicnames[i] && !strncasecmp(deh_musicnames[i], key, 6))
         {

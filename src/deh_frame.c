@@ -27,6 +27,7 @@
 #include "info.h"
 #include "m_array.h"
 #include "w_wad.h"
+#include "declarate_extra.h"
 
 //
 // DSDHacked states
@@ -40,20 +41,22 @@ actionf_t *deh_codepointer = NULL;
 
 void DEH_InitStates(void)
 {
-    states = original_states;
+    //ensure original states are kept unmodified for declarate
+
+    states = NULL;
+    array_grow_size(states, NUMSTATES);
+    memcpy(states, original_states, NUMSTATES * sizeof(*states));
     num_states = NUMSTATES;
 
-    array_grow(seenstate_tab, num_states);
-    memset(seenstate_tab, 0, num_states * sizeof(*seenstate_tab));
+    array_grow_size(seenstate_tab, num_states);
 
-    array_grow(deh_codepointer, num_states);
+    array_grow_size(deh_codepointer, num_states);
     for (int i = 0; i < num_states; i++)
     {
         deh_codepointer[i] = states[i].action;
     }
 
-    array_grow(defined_codepointer_args, num_states);
-    memset(defined_codepointer_args, 0, num_states * sizeof(*defined_codepointer_args));
+    array_grow_size(defined_codepointer_args, num_states);
 }
 
 void DEH_FreeStates(void)
@@ -71,31 +74,14 @@ void DEH_StatesEnsureCapacity(int limit)
 
     const int old_num_states = num_states;
 
-    static boolean first_allocation = true;
-    if (first_allocation)
-    {
-        states = NULL;
-        array_grow(states, old_num_states + limit);
-        memcpy(states, original_states, old_num_states * sizeof(*states));
-        first_allocation = false;
-    }
-    else
-    {
-        array_grow(states, limit);
-    }
+    array_grow_size(states, limit);
 
-    num_states = array_capacity(states);
+    num_states = array_size(states);
     const int size_delta = num_states - old_num_states;
-    memset(states + old_num_states, 0, size_delta * sizeof(*states));
-
-    array_grow(deh_codepointer, size_delta);
-    memset(deh_codepointer + old_num_states, 0, size_delta * sizeof(*deh_codepointer));
-
-    array_grow(defined_codepointer_args, size_delta);
-    memset(defined_codepointer_args + old_num_states, 0, size_delta * sizeof(*defined_codepointer_args));
-
-    array_grow(seenstate_tab, size_delta);
-    memset(seenstate_tab + old_num_states, 0, size_delta * sizeof(*seenstate_tab));
+	
+    array_grow_size(deh_codepointer, size_delta);
+    array_grow_size(defined_codepointer_args, size_delta);
+    array_grow_size(seenstate_tab, size_delta);
 
     for (int i = old_num_states; i < num_states; ++i)
     {

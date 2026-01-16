@@ -289,9 +289,10 @@ void P_InitAmbientSoundMobjInfo(void)
         .altspeed = NO_ALTSPEED,
         .meleerange = MELEERANGE,
         .bloodcolor = 0,
-        .droppeditem = MT_NULL,
+        .droppeditem = MT_NAMEDTYPE,
         .obituary = NULL,
         .obituary_melee = NULL,
+        .droppeditem_type = nulltype,
     };
 
     zmt_ambientsound = DEH_MobjInfoGetNewIndex();

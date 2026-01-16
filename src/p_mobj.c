@@ -47,6 +47,8 @@
 #include "tables.h"
 #include "v_video.h"
 #include "z_zone.h"
+#include "i_system.h"
+#include "m_array.h"
 
 boolean direct_vertical_aiming, default_direct_vertical_aiming;
 int max_pitch_angle = 32 * ANG1, default_max_pitch_angle;
@@ -155,7 +157,7 @@ void P_ExplodeMissile (mobj_t* mo)
 
   mo->momx = mo->momy = mo->momz = 0;
 
-  P_SetMobjState(mo, mobjinfo[mo->type].deathstate);
+  P_SetMobjState(mo, mo->info->deathstate);
 
   mo->tics -= P_Random(pr_explode)&3;
 
@@ -687,7 +689,7 @@ void P_NightmareRespawn(mobj_t* mobj)
   // because of removal of the body?
 
   mo = P_SpawnMobj(mobj->x, mobj->y,
-		   mobj->subsector->sector->floorheight, MT_TFOG);
+		   mobj->subsector->sector->floorheight, MT_TFOG, nulltype);
 
   // initiate teleport sound
 
@@ -697,7 +699,7 @@ void P_NightmareRespawn(mobj_t* mobj)
 
   ss = R_PointInSubsector (x,y);
 
-  mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG);
+  mo = P_SpawnMobj (x, y, ss->sector->floorheight , MT_TFOG, nulltype);
 
   S_StartSound (mo, sfx_telept);
 
@@ -708,7 +710,7 @@ void P_NightmareRespawn(mobj_t* mobj)
 
   // inherit attributes from deceased one
 
-  mo = P_SpawnMobj (x,y,z, mobj->type);
+  mo = P_SpawnMobj (x,y,z, mobj->type, mobj->type_name);
   mo->spawnpoint = mobj->spawnpoint;
   mo->angle = ANG45 * (mthing->angle/45);
 
@@ -845,15 +847,22 @@ void P_MobjThinker (mobj_t* mobj)
 // P_SpawnMobj
 //
 
-mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
+mobj_t *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, namedtype_t type_name)
 {
+  if(type == MT_NAMEDTYPE && type_name.index == TYPE_NULL)
+  {
+    I_Error("Trying to spawn mobj without a valid type");
+    return NULL;
+  }
+
   mobj_t *mobj = arena_alloc(thinkers_arena, mobj_t);
-  mobjinfo_t *info = &mobjinfo[type];
+  mobjinfo_t *info = get_info(type, type_name);
   state_t    *st;
 
   memset(mobj, 0, sizeof *mobj);
 
   mobj->type = type;
+  mobj->type_name = type_name;
   mobj->info = info;
   mobj->x = x;
   mobj->y = y;
@@ -1040,29 +1049,67 @@ mobj_t *P_SubstNullMobj(mobj_t *mobj)
 // killough 8/24/98: rewrote to use hashing
 //
 
-int P_FindDoomedNum(unsigned type)
-{
-  static struct { int first, next; } *hash;
-  register int i;
+#define DOOMEDNUM_HASH_SIZE 1024
 
-  if (!hash)
+typedef struct
+{
+    int ednum;
+    int type;
+    int type_name;
+} DoomedNumEntry;
+
+DoomedNumEntry* DoomedNumHash[DOOMEDNUM_HASH_SIZE];
+bool hash_initialized = false;
+
+int P_FindDoomedNum(unsigned type, namedtype_t *type_name)
+{
+    if (!hash_initialized)
     {
-      hash = Z_Malloc(sizeof *hash * num_mobj_types, PU_CACHE, (void **) &hash);
-      for (i=0; i<num_mobj_types; i++)
-	hash[i].first = num_mobj_types;
-      for (i=0; i<num_mobj_types; i++)
-	if (mobjinfo[i].doomednum != -1)
-	  {
-	    unsigned h = (unsigned) mobjinfo[i].doomednum % num_mobj_types;
-	    hash[i].next = hash[h].first;
-	    hash[h].first = i;
-	  }
+        hash_initialized = true;
+
+        for (int i = 0; i < num_mobj_types; i++)
+        {
+            if(mobjinfo[i].doomednum != 0)
+            {
+                DoomedNumEntry * arr = DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE];
+                array_push(arr, ((DoomedNumEntry){mobjinfo[i].doomednum, i, 0}));
+                DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE] = arr;
+            }
+        }
+
+        int n = array_size(namedmobjs);
+
+        for(int i = 1; i < n; i++)
+        {
+            if(namedmobjs[i].doomednum != 0)
+            {
+                DoomedNumEntry * arr = DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE];
+                array_push(arr, ((DoomedNumEntry){namedmobjs[i].doomednum, MT_NAMEDTYPE, i}));
+                DoomedNumHash[mobjinfo[i].doomednum % DOOMEDNUM_HASH_SIZE] = arr;
+            }
+        }
     }
   
-  i = hash[type % num_mobj_types].first;
-  while (i < num_mobj_types && mobjinfo[i].doomednum != type)
-    i = hash[i].next;
-  return i;
+    DoomedNumEntry * arr = DoomedNumHash[type % DOOMEDNUM_HASH_SIZE];
+
+    if(arr)
+    {
+        int n = array_size(arr);
+        for(int i = 0; i < n; i++)
+        {
+            if(arr[i].ednum == type)
+            {
+                if(arr[i].type == MT_NAMEDTYPE && !type_name)
+                { // found ednum, but caller doesn't support named types
+                    return num_mobj_types;
+                }
+                
+                if(type_name) type_name->index = arr[i].type_name;
+                return arr[i].type;
+            }
+        }
+    }
+    return num_mobj_types;
 }
 
 //
@@ -1091,18 +1138,19 @@ void P_RespawnSpecials (void)
   // spawn a teleport fog at the new spot
 
   ss = R_PointInSubsector (x,y);
-  mo = P_SpawnMobj(x, y, ss->sector->floorheight , MT_IFOG);
+  mo = P_SpawnMobj(x, y, ss->sector->floorheight , MT_IFOG, nulltype);
   S_StartSound(mo, sfx_itmbk);
 
   // find which type to spawn
 
   // killough 8/23/98: use table for faster lookup
-  i = P_FindDoomedNum(mthing->type);
+  namedtype_t type_name = nulltype;
+  i = P_FindDoomedNum(mthing->type, &type_name);
 
   // spawn it
-  z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
+  z = get_info(i, type_name)->flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
-  mo = P_SpawnMobj(x,y,z, i);
+  mo = P_SpawnMobj(x,y,z, i, type_name);
   mo->spawnpoint = *mthing;
   mo->angle = ANG45 * (mthing->angle/45);
 
@@ -1138,7 +1186,7 @@ void P_SpawnPlayer (mapthing_t* mthing)
   x    = mthing->x;
   y    = mthing->y;
   z    = ONFLOORZ;
-  mobj = P_SpawnMobj (x,y,z, MT_PLAYER);
+  mobj = P_SpawnMobj (x,y,z, MT_PLAYER, nulltype);
 
   // set color translations for player sprites
 
@@ -1300,8 +1348,11 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   // find which type to spawn
 
+  namedtype_t type_name = nulltype;
   // killough 8/23/98: use table for faster lookup
-  i = P_FindDoomedNum(mthing->type);
+  i = P_FindDoomedNum(mthing->type, &type_name);
+
+  mobjinfo_t *mi = get_info(i, type_name);
 
   // phares 5/16/98:
   // Do not abort because of an unknown thing. Ignore it, but post a
@@ -1328,12 +1379,12 @@ void P_SpawnMapThing (mapthing_t* mthing)
 
   // don't spawn keycards and players in deathmatch
 
-  if (deathmatch && mobjinfo[i].flags & MF_NOTDMATCH)
+  if (deathmatch && mi->flags & MF_NOTDMATCH)
     return;
 
   // don't spawn any monsters if -nomonsters
 
-  if (nomonsters && (i == MT_SKULL || (mobjinfo[i].flags & MF_COUNTKILL)))
+  if (nomonsters && (i == MT_SKULL || (mi->flags & MF_COUNTKILL)))
     return;
 
   // spawn it
@@ -1342,11 +1393,11 @@ spawnit:
   x = mthing->x;
   y = mthing->y;
 
-  z = mobjinfo[i].flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
+  z = mi->flags & MF_SPAWNCEILING ? ONCEILINGZ : ONFLOORZ;
 
   // Because of DSDHacked, allow `i` values outside enum mobjtype_t range
   // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
-  mobj = P_SpawnMobj (x,y,z, i);
+  mobj = P_SpawnMobj (x,y,z, i, type_name);
   mobj->spawnpoint = *mthing;
 
   if (mobj->tics > 0)
@@ -1414,7 +1465,7 @@ void P_SpawnPuff(fixed_t x,fixed_t y,fixed_t z)
   int t = P_Random(pr_spawnpuff);
   z += (t - P_Random(pr_spawnpuff))<<10;
 
-  th = P_SpawnMobj (x,y,z, MT_PUFF);
+  th = P_SpawnMobj (x,y,z, MT_PUFF, nulltype);
   th->momz = FRACUNIT;
   th->tics -= P_Random(pr_spawnpuff)&3;
 
@@ -1440,7 +1491,7 @@ void P_SpawnBlood(fixed_t x,fixed_t y,fixed_t z,int damage,mobj_t *bleeder)
   // killough 5/5/98: remove dependence on order of evaluation:
   int t = P_Random(pr_spawnblood);
   z += (t - P_Random(pr_spawnblood))<<10;
-  th = P_SpawnMobj(x,y,z, MT_BLOOD);
+  th = P_SpawnMobj(x,y,z, MT_BLOOD, nulltype);
   th->momz = FRACUNIT*2;
   th->tics -= P_Random(pr_spawnblood)&3;
   if (bleeder->info->bloodcolor)
@@ -1497,11 +1548,11 @@ boolean P_CheckMissileSpawn (mobj_t* th)
 // P_SpawnMissile
 //
 
-mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type)
+mobj_t* P_SpawnMissile(mobj_t* source,mobj_t* dest,mobjtype_t type, namedtype_t named_type)
 {
   angle_t an;
   int     dist;
-  mobj_t *th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type);
+  mobj_t *th = P_SpawnMobj (source->x,source->y,source->z + 4*8*FRACUNIT,type, named_type);
 
   if (th->info->seesound)
     S_StartSound (th, th->info->seesound);
@@ -1539,7 +1590,7 @@ int autoaim = 0;  // killough 7/19/98: autoaiming was not in original beta
 // Tries to aim at a nearby monster
 //
 
-mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
+mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type, namedtype_t named_type)
 {
   mobj_t *th;
   fixed_t x, y, z, slope = 0;
@@ -1575,7 +1626,7 @@ mobj_t* P_SpawnPlayerMissile(mobj_t* source,mobjtype_t type)
   y = source->y;
   z = source->z + 4*8*FRACUNIT;
 
-  th = P_SpawnMobj (x,y,z, type);
+  th = P_SpawnMobj (x,y,z, type, nulltype);
 
   if (th->info->seesound)
     S_StartSoundMissile(source, th, th->info->seesound);

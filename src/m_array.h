@@ -25,6 +25,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "i_system.h"
 
@@ -83,11 +84,17 @@ inline static void *M_ArrayGrow(void *v, size_t esize, int n)
         p = array_ptr(v);
         p = M_ARRAY_REALLOC(p, sizeof(m_array_buffer_t)
                                    + (p->capacity + n) * esize);
+		
+		if(!p) return NULL;
+		
         p->capacity += n;
     }
     else
     {
         p = M_ARRAY_MALLOC(sizeof(m_array_buffer_t) + n * esize);
+		
+		if(!p) return NULL;
+		
         p->capacity = n;
         p->size = 0;
     }
@@ -95,7 +102,7 @@ inline static void *M_ArrayGrow(void *v, size_t esize, int n)
     return p->buffer;
 }
 
-#define array_grow(v, n) ((v) = M_ArrayGrow(v, sizeof(*(v)), n))
+#define array_grow(v, n) ((v) = M_ArrayGrow((void*)(v), sizeof(*(v)), n))
 
 // Appends an element to the end of the array.
 #define array_push(v, e)                                       \
@@ -109,40 +116,49 @@ inline static void *M_ArrayGrow(void *v, size_t esize, int n)
         {                                                      \
             array_grow(v, array_ptr(v)->capacity);             \
         }                                                      \
-        (v)[array_ptr(v)->size++] = (e);                       \
+        (v)[array_ptr((void*)(v))->size++] = (e);              \
     } while (0)
+
+// follows same rules as push,
+// increases size to N, if not possible, double array capacity
+// (or to N, whichever is largest, but at minimum M_ARRAY_INIT_CAPACITY)
+// (also zeroes memory for the grown range)
+#define array_grow_size(v, n) ((v) = M_ArrayGrowSize((void*)(v), sizeof(*(v)), n))
+
+// reduces capacity to size
+#define array_shrink_to_fit(v, e) ((v) = M_ArrayResize((void*)(v), sizeof(*(v)), array_size(v)))
 
 // Removes and returns the last element of the array.
 // The array must not be empty.
-#define array_pop(v) ((v)[--array_ptr(v)->size])
+#define array_pop(v) ((v)[--array_ptr((void*)(v))->size])
 
 // Deletes 'n' elements from the array starting at index 'i'.
-#define array_delete_n(v, i, n)                                               \
-    do                                                                        \
-    {                                                                         \
-        if (v)                                                                \
-        {                                                                     \
-            int to_delete = (n);                                              \
-            int index = (i);                                                  \
-            memmove(&(v)[index], &(v)[index + to_delete],                     \
-                    sizeof(*(v)) * (array_ptr(v)->size - to_delete - index)); \
-            array_ptr(v)->size -= to_delete;                                  \
-        }                                                                     \
+#define array_delete_n(v, i, n)                                                        \
+    do                                                                                 \
+    {                                                                                  \
+        if (v)                                                                         \
+        {                                                                              \
+            int to_delete = (n);                                                       \
+            int index = (i);                                                           \
+            memmove((void*)&(v)[index], (void*)&(v)[index + to_delete],                \
+                    sizeof(*(v)) * (array_ptr((void*)(v))->size - to_delete - index)); \
+            array_ptr((void*)(v))->size -= to_delete;                                  \
+        }                                                                              \
     } while (0)
 
 #define array_delete(v, i) array_delete_n(v, i, 1)
 
-#define array_free(v)                     \
-    do                                    \
-    {                                     \
-        if (v)                            \
-        {                                 \
-            M_ARRAY_FREE(array_ptr(v));   \
-            (v) = NULL;                   \
-        }                                 \
+#define array_free(v)                                    \
+    do                                                   \
+    {                                                    \
+        if (v)                                           \
+        {                                                \
+            M_ARRAY_FREE((void*)array_ptr((void*)(v)));  \
+            (v) = NULL;                                  \
+        }                                                \
     } while (0)
 
-#define array_end(v) ((v) ? (v) + array_ptr(v)->size : (v))
+#define array_end(v) ((v) ? (v) + array_ptr((void*)(v))->size : (v))
 
 #define array_foreach(ptr, v) for (ptr = (v); ptr != array_end(v); ++ptr)
 
@@ -173,7 +189,7 @@ inline static void *M_ArrayGrow(void *v, size_t esize, int n)
                 memset(&(v)[old_size], 0,                     \
                        sizeof(*(v)) * (new_size - old_size)); \
             }                                                 \
-            array_ptr(v)->size = new_size;                    \
+            array_ptr((void*)(v))->size = new_size;           \
         }                                                     \
     } while (0)
 
@@ -194,5 +210,69 @@ inline static void *M_ArrayGrow(void *v, size_t esize, int n)
             }                                            \
         }                                                \
     } while (0)
+
+inline static void *M_ArrayGrowSize(void *v, size_t esize, int n)
+{
+    m_array_buffer_t *p;
+
+    int growsize = MAX(n, M_ARRAY_INIT_CAPACITY);
+    int oldsize = 0;
+
+    if (v)
+    {
+        // if the array exists, we may not need to grow
+        p = array_ptr(v);
+        oldsize = p->size;
+        if(n <= p->size)
+        {
+            p->size = n;
+            return p->buffer;
+        }
+        else
+        {
+            growsize = MAX(p->capacity + p->capacity, growsize); // double capacity, or grow to n, whichever is greatest
+        }
+    }
+
+    v = M_ArrayGrow(v, esize, growsize);
+    p = array_ptr(v);
+    p->size = n;
+
+    assert(oldsize >= 0);
+    assert(n >= oldsize);
+    
+    int delta = n - oldsize;
+
+    if(delta)
+    {
+        //zero out newly created elements
+        memset(p->buffer + (oldsize * esize), 0, delta * esize);
+    }
+    
+    return p->buffer;
+}
+
+inline static void *M_ArrayResize(void *v, size_t esize, int n)
+{
+    m_array_buffer_t *p;
+
+    if (v)
+    {
+        if(p->capacity != n)
+        { // don't realloc if we're already sized right
+            p = array_ptr(v);
+            p = M_ARRAY_REALLOC(p, sizeof(m_array_buffer_t) + (n * esize));
+            p->capacity = n;
+        }
+    }
+    else
+    {
+        p = M_ARRAY_MALLOC(sizeof(m_array_buffer_t) + (n * esize));
+        p->capacity = n;
+        p->size = 0;
+    }
+
+    return p->buffer;
+}
 
 #endif // M_ARRAY_H

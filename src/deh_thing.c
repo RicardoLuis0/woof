@@ -37,6 +37,7 @@
 #include "p_map.h"
 #include "p_mobj.h"
 #include "sounds.h"
+#include "declarate_extra.h"
 
 boolean deh_set_blood_color = false;
 
@@ -50,15 +51,22 @@ static int mobj_index;
 
 void DEH_InitMobjInfo(void)
 {
-    mobjinfo = original_mobjinfo;
+    //ensure original mobjinfos are kept unmodified for declarate
+    mobjinfo = NULL;
+    array_grow_size(mobjinfo, NUMMOBJTYPES);
+    memcpy(mobjinfo, original_mobjinfo, NUMMOBJTYPES * sizeof(*mobjinfo));
+
     num_mobj_types = NUMMOBJTYPES;
     mobj_index = NUMMOBJTYPES - 1;
-
+	
+    declarate_InitNamedMobjInfo();
+	
     // don't want to reorganize info.c structure for a few tweaks...
     for (int i = 0; i < num_mobj_types; ++i)
     {
-        // DEHEXTRA
-        mobjinfo[i].droppeditem = MT_NULL;
+        // DEHEXTRA, DECLARATE
+		mobjinfo[i].droppeditem      = MT_NAMEDTYPE;
+		mobjinfo[i].droppeditem_type = nulltype;
         // MBF21
         mobjinfo[i].flags2           = 0;
         mobjinfo[i].infighting_group = IG_DEFAULT;
@@ -168,26 +176,15 @@ void DEH_MobjInfoEnsureCapacity(int limit)
 
     const int old_num_mobj_types = num_mobj_types;
 
-    static boolean first_allocation = true;
-    if (first_allocation)
-    {
-        mobjinfo = NULL;
-        array_grow(mobjinfo, old_num_mobj_types + limit);
-        memcpy(mobjinfo, original_mobjinfo, old_num_mobj_types * sizeof(*mobjinfo));
-        first_allocation = false;
-    }
-    else
-    {
-        array_grow(mobjinfo, limit);
-    }
+    array_grow_size(mobjinfo, limit);
 
-    num_mobj_types = array_capacity(mobjinfo);
-    memset(mobjinfo + old_num_mobj_types, 0, (num_mobj_types - old_num_mobj_types) * sizeof(*mobjinfo));
+    num_mobj_types = array_size(mobjinfo);
 
     for (int i = old_num_mobj_types; i < num_mobj_types; ++i)
     {
-        // DEHEXTRA
-        mobjinfo[i].droppeditem = MT_NULL;
+        // DEHEXTRA, DECLARATE
+		mobjinfo[i].droppeditem      = MT_NAMEDTYPE;
+		mobjinfo[i].droppeditem_type = nulltype;
         // MBF21
         mobjinfo[i].infighting_group = IG_DEFAULT;
         mobjinfo[i].projectile_group = PG_DEFAULT;

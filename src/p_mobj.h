@@ -403,6 +403,9 @@ typedef struct mobj_s
 
     // [FG] height of the sprite in pixels
     int actualheight;
+
+    // [Jay] typename for delcarate, 0 is null type
+    namedtype_t type_name;
 } mobj_t;
 
 // External declarations (fomerly in p_local.h) -- killough 5/2/98
@@ -448,22 +451,28 @@ void P_SetActualHeight(mobj_t *mobj);
 
 mobj_t *P_SubstNullMobj(mobj_t *mobj);
 void    P_RespawnSpecials(void);
-mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
+mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, namedtype_t typename);
 void    P_RemoveMobj(mobj_t *th);
 boolean P_SetMobjState(mobj_t *mobj, statenum_t state);
 void    P_MobjThinker(mobj_t *mobj);
 void    P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
 void    P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage, mobj_t *bleeder);
 void    P_SpawnPlayer (mapthing_t* mthing);
-mobj_t  *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
+mobj_t  *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type, namedtype_t named_type);
 extern int autoaim;
-mobj_t  *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
+mobj_t  *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type, namedtype_t named_type);
 void    P_SpawnMapThing (mapthing_t*  mthing);
 boolean P_CheckMissileSpawn(mobj_t*);  // killough 8/2/98
 void    P_ExplodeMissile(mobj_t*);    // killough
 
 boolean P_SeekerMissile(mobj_t *actor, mobj_t **seekTarget, angle_t thresh, angle_t turnMax, boolean seekcenter);
 int     P_FaceMobj(mobj_t *source, mobj_t *target, angle_t *delta);
+
+inline mobjinfo_t *get_info(int type, namedtype_t named_type)
+{
+    return (type == MT_NAMEDTYPE) ? &namedmobjs[named_type.index] : &mobjinfo[type];
+}
+
 #endif
 
 //----------------------------------------------------------------------------

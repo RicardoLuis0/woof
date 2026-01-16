@@ -1287,7 +1287,8 @@ extern char *original_sprnames[];             // 1/17/98 killough
 // Note that many of these are generically named for the ornamentals
 //
 typedef enum {
-  MT_NULL = -1, // null/invalid mobj (zero is reserved for MT_PLAYER)
+  MT_NULL = -1,
+  MT_NAMEDTYPE = -1, // null/invalid/declarate mobj (zero is reserved for MT_PLAYER) (null/invalid have typename of 0)
   MT_PLAYER,
   MT_POSSESSED,
   MT_SHOTGUY,
@@ -1437,9 +1438,18 @@ typedef enum {
 
   MT_MUSICSOURCE, // [crispy] support MUSINFO lump (dynamic music changing)
 
-  NUMMOBJTYPES  // Counter of how many there are
+  NUMMOBJTYPES,  // Counter of how many there are
 
 } mobjtype_t;
+
+typedef struct {int index;} name_t;
+typedef struct {int index;} namedtype_t;
+
+enum {
+    TYPE_NULL = 0,
+};
+
+static const namedtype_t nulltype = {TYPE_NULL};
 
 typedef enum {
   IG_DEFAULT,
@@ -1529,7 +1539,23 @@ typedef struct
     // [Woof!]
     int flags_extra;  // Woof!-exclusive extension
     int bloodcolor;   // [FG] colored blood and gibs
+	
+	// DECLARATE
+    namedtype_t droppeditem_type;
 } mobjinfo_t;
+
+typedef struct {
+    int nameindex;
+    int stateindex;
+} statelabel_info_t;
+
+typedef struct
+{
+    statelabel_info_t* labels;
+    int states_start;
+    int states_length;
+} named_mobjinfo_data_t;
+
 
 #define NO_ALTSPEED -1
 
@@ -1542,6 +1568,14 @@ extern int num_states;
 extern char** sprnames;
 extern int num_sprites;
 extern mobjinfo_t* mobjinfo;
+
+extern mobjinfo_t* namedmobjs;
+
+extern char ** namelist;
+
+name_t LookupNameIndex(const char * name); // string -> name index
+namedtype_t LookupTypeIndex(name_t name); // name index -> type index
+
 extern int num_mobj_types;
 
 // ZDoom

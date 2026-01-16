@@ -27,6 +27,7 @@
 #include "deh_main.h"
 #include "info.h"
 #include "m_array.h"
+#include "declarate_extra.h"
 
 //
 // DSDHacked Sprites
@@ -39,22 +40,26 @@ static byte *sprnames_state = NULL;
 
 void DEH_InitSprites(void)
 {
-    sprnames = original_sprnames;
+    //ensure original sprite names are kept unmodified for declarate
+
     num_sprites = NUMSPRITES;
 
-    array_grow(deh_spritenames, num_sprites);
+    sprnames = NULL;
+    array_grow_size(sprnames, NUMSPRITES);
+    memcpy(sprnames, original_sprnames, NUMSPRITES * sizeof(*sprnames));
+
+    array_grow_size(deh_spritenames, num_sprites);
     for (int i = 0; i < num_sprites; i++)
     {
         deh_spritenames[i] = strdup(sprnames[i]);
     }
 
-    array_grow(sprnames_state, num_sprites);
-    memset(sprnames_state, 0, num_sprites * sizeof(*sprnames_state));
+    array_grow_size(sprnames_state, num_sprites);
 }
 
 void DEH_FreeSprites(void)
 {
-    for (int i = 0; i < array_capacity(deh_spritenames); i++)
+    for (int i = 0; i < array_size(deh_spritenames); i++)
     {
         if (deh_spritenames[i])
         {
@@ -74,25 +79,12 @@ static void SpritesEnsureCapacity(int limit)
 
     const int old_num_sprites = num_sprites;
 
-    static boolean first_allocation = true;
-    if (first_allocation)
-    {
-        sprnames = NULL;
-        array_grow(sprnames, old_num_sprites + limit);
-        memcpy(sprnames, original_sprnames, old_num_sprites * sizeof(*sprnames));
-        first_allocation = false;
-    }
-    else
-    {
-        array_grow(sprnames, limit);
-    }
+    array_grow_size(sprnames, limit);
 
-    num_sprites = array_capacity(sprnames);
+    num_sprites = array_size(sprnames);
     const int size_delta = num_sprites - old_num_sprites;
-    memset(sprnames + old_num_sprites, 0, size_delta * sizeof(*sprnames));
 
-    array_grow(sprnames_state, size_delta);
-    memset(sprnames_state + old_num_sprites, 0, size_delta * sizeof(*sprnames_state));
+    array_grow_size(sprnames_state, size_delta);
 }
 
 int DEH_SpritesGetIndex(const char *key)
@@ -113,7 +105,7 @@ int DEH_SpritesGetIndex(const char *key)
 
 int DEH_SpritesGetOriginalIndex(const char *key)
 {
-    for (int i = 0; i < array_capacity(deh_spritenames); ++i)
+    for (int i = 0; i < array_size(deh_spritenames); ++i)
     {
         if (deh_spritenames[i] && !strncasecmp(deh_spritenames[i], key, 4))
         {

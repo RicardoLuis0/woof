@@ -3375,7 +3375,7 @@ static boolean G_CheckSpot(int playernum, mapthing_t *mthing)
       ya = finesine[an];
     }
     mo = P_SpawnMobj(x + 20 * xa, y + 20 * ya,
-                     ss->sector->floorheight, MT_TFOG);
+                     ss->sector->floorheight, MT_TFOG, nulltype);
   }
 
   if (players[consoleplayer].viewz != 1) // don't start sound on first frame

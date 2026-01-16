@@ -1397,7 +1397,7 @@ void A_BspiAttack(mobj_t *actor)
   if (!actor->target)
     return;
   A_FaceTarget(actor);
-  P_SpawnMissile(actor, actor->target, MT_ARACHPLAZ);  // launch a missile
+  P_SpawnMissile(actor, actor->target, MT_ARACHPLAZ, nulltype);  // launch a missile
 }
 
 //
@@ -1417,7 +1417,7 @@ void A_TroopAttack(mobj_t *actor)
       P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
       return;
     }
-  P_SpawnMissile(actor, actor->target, MT_TROOPSHOT);  // launch a missile
+  P_SpawnMissile(actor, actor->target, MT_TROOPSHOT, nulltype);  // launch a missile
 }
 
 void A_SargAttack(mobj_t *actor)
@@ -1443,7 +1443,7 @@ void A_HeadAttack(mobj_t *actor)
       P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
       return;
     }
-  P_SpawnMissile(actor, actor->target, MT_HEADSHOT);  // launch a missile
+  P_SpawnMissile(actor, actor->target, MT_HEADSHOT, nulltype);  // launch a missile
 }
 
 void A_CyberAttack(mobj_t *actor)
@@ -1451,7 +1451,7 @@ void A_CyberAttack(mobj_t *actor)
   if (!actor->target)
     return;
   A_FaceTarget(actor);
-  P_SpawnMissile(actor, actor->target, MT_ROCKET);
+  P_SpawnMissile(actor, actor->target, MT_ROCKET, nulltype);
 }
 
 void A_BruisAttack(mobj_t *actor)
@@ -1466,7 +1466,7 @@ void A_BruisAttack(mobj_t *actor)
       P_DamageMobjBy(actor->target, actor, actor, damage, MOD_Melee);
       return;
     }
-  P_SpawnMissile(actor, actor->target, MT_BRUISERSHOT);  // launch a missile
+  P_SpawnMissile(actor, actor->target, MT_BRUISERSHOT, nulltype);  // launch a missile
 }
 
 //
@@ -1482,7 +1482,7 @@ void A_SkelMissile(mobj_t *actor)
 
   A_FaceTarget (actor);
   actor->z += 16*FRACUNIT;      // so missile spawns higher
-  mo = P_SpawnMissile (actor, actor->target, MT_TRACER);
+  mo = P_SpawnMissile (actor, actor->target, MT_TRACER, nulltype);
   actor->z -= 16*FRACUNIT;      // back to normal
 
   mo->x += mo->momx;
@@ -1522,7 +1522,7 @@ void A_Tracer(mobj_t *actor)
 
   th = P_SpawnMobj (actor->x-actor->momx,
                     actor->y-actor->momy,
-                    actor->z, MT_SMOKE);
+                    actor->z, MT_SMOKE, nulltype);
 
   th->momz = FRACUNIT;
   th->tics -= P_Random(pr_tracer) & 3;
@@ -1873,7 +1873,7 @@ void A_VileTarget(mobj_t *actor)
   // killough 12/98: fix Vile fog coordinates
   fog = P_SpawnMobj(actor->target->x,
                     demo_version < DV_MBF ? actor->target->x : actor->target->y,
-                    actor->target->z,MT_FIRE);
+                    actor->target->z, MT_FIRE, nulltype);
 
   P_SetTarget(&actor->tracer, fog);   // killough 11/98
   P_SetTarget(&fog->target, actor);
@@ -1946,9 +1946,9 @@ void A_FatAttack1(mobj_t *actor)
   // Change direction  to ...
   actor->angle += FATSPREAD;
   target = P_SubstNullMobj(actor->target);
-  P_SpawnMissile(actor, target, MT_FATSHOT);
+  P_SpawnMissile(actor, target, MT_FATSHOT, nulltype);
 
-  mo = P_SpawnMissile (actor, target, MT_FATSHOT);
+  mo = P_SpawnMissile (actor, target, MT_FATSHOT, nulltype);
   mo->angle += FATSPREAD;
   an = mo->angle >> ANGLETOFINESHIFT;
   mo->momx = FixedMul(mo->info->speed, finecosine[an]);
@@ -1965,9 +1965,9 @@ void A_FatAttack2(mobj_t *actor)
   // Now here choose opposite deviation.
   actor->angle -= FATSPREAD;
   target = P_SubstNullMobj(actor->target);
-  P_SpawnMissile(actor, target, MT_FATSHOT);
+  P_SpawnMissile(actor, target, MT_FATSHOT, nulltype);
 
-  mo = P_SpawnMissile(actor, target, MT_FATSHOT);
+  mo = P_SpawnMissile(actor, target, MT_FATSHOT, nulltype);
   mo->angle -= FATSPREAD*2;
   an = mo->angle >> ANGLETOFINESHIFT;
   mo->momx = FixedMul(mo->info->speed, finecosine[an]);
@@ -1984,13 +1984,13 @@ void A_FatAttack3(mobj_t *actor)
 
   target = P_SubstNullMobj(actor->target);
 
-  mo = P_SpawnMissile(actor, target, MT_FATSHOT);
+  mo = P_SpawnMissile(actor, target, MT_FATSHOT, nulltype);
   mo->angle -= FATSPREAD/2;
   an = mo->angle >> ANGLETOFINESHIFT;
   mo->momx = FixedMul(mo->info->speed, finecosine[an]);
   mo->momy = FixedMul(mo->info->speed, finesine[an]);
 
-  mo = P_SpawnMissile(actor, target, MT_FATSHOT);
+  mo = P_SpawnMissile(actor, target, MT_FATSHOT, nulltype);
   mo->angle += FATSPREAD/2;
   an = mo->angle >> ANGLETOFINESHIFT;
   mo->momx = FixedMul(mo->info->speed, finecosine[an]);
@@ -2104,7 +2104,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
   z = actor->z + 8*FRACUNIT;
 
   if (comp[comp_skull])   // killough 10/98: compatibility-optioned
-    newmobj = P_SpawnMobj(x, y, z, MT_SKULL);                     // phares
+    newmobj = P_SpawnMobj(x, y, z, MT_SKULL, nulltype);        // phares
   else                                                            //   V
     {
       // Check whether the Lost Soul is being fired through a 1-sided
@@ -2116,7 +2116,7 @@ void A_PainShootSkull(mobj_t *actor, angle_t angle)
       if (Check_Sides(actor,x,y))
         return;
 
-      newmobj = P_SpawnMobj(x, y, z, MT_SKULL);
+      newmobj = P_SpawnMobj(x, y, z, MT_SKULL, nulltype);
 
       // Check to see if the new Lost Soul's z value is above the
       // ceiling of its new sector, or below the floor. If so, kill it.
@@ -2273,7 +2273,7 @@ void A_Mushroom(mobj_t *actor)
 	target.x += i << FRACBITS;    // Aim in many directions from source
 	target.y += j << FRACBITS;
 	target.z += P_AproxDistance(i,j) * misc1;           // Aim fairly high
-	mo = P_SpawnMissile(actor, &target, MT_FATSHOT);    // Launch fireball
+	mo = P_SpawnMissile(actor, &target, MT_FATSHOT, nulltype);    // Launch fireball
 	mo->momx = FixedMul(mo->momx, misc2);
 	mo->momy = FixedMul(mo->momy, misc2);               // Slow down a bit
 	mo->momz = FixedMul(mo->momz, misc2);
@@ -2588,7 +2588,7 @@ void A_BrainScream(mobj_t *mo)
     {
       int y = mo->y - 320*FRACUNIT;
       int z = 128 + P_Random(pr_brainscream)*2*FRACUNIT;
-      mobj_t *th = P_SpawnMobj (x,y,z, MT_ROCKET);
+      mobj_t *th = P_SpawnMobj (x,y,z, MT_ROCKET, nulltype);
       th->momz = P_Random(pr_brainscream)*512;
       P_SetMobjState(th, S_BRAINEXPLODE1);
       th->tics -= P_Random(pr_brainscream)&7;
@@ -2604,7 +2604,7 @@ void A_BrainExplode(mobj_t *mo)
   int x = mo->x + (t - P_Random(pr_brainexp))*2048;
   int y = mo->y;
   int z = 128 + P_Random(pr_brainexp)*2*FRACUNIT;
-  mobj_t *th = P_SpawnMobj(x,y,z, MT_ROCKET);
+  mobj_t *th = P_SpawnMobj(x,y,z, MT_ROCKET, nulltype);
   th->momz = P_Random(pr_brainexp)*512;
   P_SetMobjState(th, S_BRAINEXPLODE1);
   th->tics -= P_Random(pr_brainexp)&7;
@@ -2633,7 +2633,7 @@ void A_BrainSpit(mobj_t *mo)
   brain.targeton %= numbraintargets;     // Use brain struct for targets
 
   // spawn brain missile
-  newmobj = P_SpawnMissile(mo, targ, MT_SPAWNSHOT);
+  newmobj = P_SpawnMissile(mo, targ, MT_SPAWNSHOT, nulltype);
   P_SetTarget(&newmobj->target, targ);
   newmobj->reactiontime = (short)(((targ->y-mo->y)/newmobj->momy)/newmobj->state->tics);
 
@@ -2680,7 +2680,7 @@ void A_SpawnFly(mobj_t *mo)
   targ = P_SubstNullMobj(mo->target);
 
   // First spawn teleport fog.
-  fog = P_SpawnMobj(targ->x, targ->y, targ->z, MT_SPAWNFIRE);
+  fog = P_SpawnMobj(targ->x, targ->y, targ->z, MT_SPAWNFIRE, nulltype);
 
   S_StartSound(fog, sfx_telept);
 
@@ -2711,7 +2711,7 @@ void A_SpawnFly(mobj_t *mo)
   else
     type = MT_BRUISER;
 
-  newmobj = P_SpawnMobj(targ->x, targ->y, targ->z, type);
+  newmobj = P_SpawnMobj(targ->x, targ->y, targ->z, type, nulltype);
 
   // killough 7/18/98: brain friendliness is transferred
   newmobj->flags = (newmobj->flags & ~MF_FRIEND) | (mo->flags & MF_FRIEND);
@@ -2781,7 +2781,7 @@ void A_Spawn(mobj_t *mo)
     {
       mobj_t *newmobj = P_SpawnMobj(mo->x, mo->y, 
 				    (mo->state->misc2 << FRACBITS) + mo->z, 
-				    mo->state->misc1 - 1);
+				    mo->state->misc1 - 1, nulltype);
 
       if (comp[comp_friendlyspawn])
       {
@@ -2872,17 +2872,13 @@ void A_LineEffect(mobj_t *mo)
 //   args[6]: Y velocity (fixed point)
 //   args[7]: Z velocity (fixed point)
 //
-void A_SpawnObject(mobj_t *actor)
+static void A_SpawnObjectImpl(mobj_t *actor, int type, namedtype_t named_type)
 {
-  int type, angle, ofs_x, ofs_y, ofs_z, vel_x, vel_y, vel_z;
+  int angle, ofs_x, ofs_y, ofs_z, vel_x, vel_y, vel_z;
   angle_t an;
   int fan, dx, dy;
   mobj_t *mo;
 
-  if (!mbf21 || !actor->state->args[0])
-    return;
-
-  type  = actor->state->args[0] - 1;
   angle = actor->state->args[1];
   ofs_x = actor->state->args[2];
   ofs_y = actor->state->args[3];
@@ -2898,7 +2894,7 @@ void A_SpawnObject(mobj_t *actor)
   dy = FixedMul(ofs_x, finesine[fan]  ) + FixedMul(ofs_y, finecosine[fan]);
 
   // spawn it, yo
-  mo = P_SpawnMobj(actor->x + dx, actor->y + dy, actor->z + ofs_z, type);
+  mo = P_SpawnMobj(actor->x + dx, actor->y + dy, actor->z + ofs_z, type, named_type);
   if (!mo)
     return;
 
@@ -2931,6 +2927,25 @@ void A_SpawnObject(mobj_t *actor)
   // that exists in A_Spawn, 'cause WTF is that about anyway?
 }
 
+void A_SpawnObject(mobj_t *actor)
+{
+    if (!mbf21 || !actor->state->args[0])
+        return;
+    A_SpawnObjectImpl(actor, actor->state->args[0] - 1, nulltype);
+}
+
+void A_SpawnObjectNamed(mobj_t *actor)
+{
+    if (!mbf21 || !actor->state->args[0])
+        return;
+    namedtype_t type = LookupTypeIndex((name_t){actor->state->args[0]});
+
+    if(!type.index)
+        return;
+
+    A_SpawnObjectImpl(actor, MT_NAMEDTYPE, type);
+}
+
 //
 // A_MonsterProjectile
 // A parameterized monster projectile attack.
@@ -2940,23 +2955,19 @@ void A_SpawnObject(mobj_t *actor)
 //   args[3]: X/Y spawn offset, relative to calling actor's angle
 //   args[4]: Z spawn offset, relative to actor's default projectile fire height
 //
-void A_MonsterProjectile(mobj_t *actor)
+static void A_MonsterProjectileImpl(mobj_t *actor, int type, namedtype_t named_type)
 {
-  int type, angle, pitch, spawnofs_xy, spawnofs_z;
+  int angle, pitch, spawnofs_xy, spawnofs_z;
   mobj_t *mo;
   int an;
 
-  if (!mbf21 || !actor->target || !actor->state->args[0])
-    return;
-
-  type        = actor->state->args[0] - 1;
   angle       = actor->state->args[1];
   pitch       = actor->state->args[2];
   spawnofs_xy = actor->state->args[3];
   spawnofs_z  = actor->state->args[4];
 
   A_FaceTarget(actor);
-  mo = P_SpawnMissile(actor, actor->target, type);
+  mo = P_SpawnMissile(actor, actor->target, type, named_type);
   if (!mo)
     return;
 
@@ -2979,6 +2990,27 @@ void A_MonsterProjectile(mobj_t *actor)
   // always set the 'tracer' field, so this pointer
   // can be used to fire seeker missiles at will.
   P_SetTarget(&mo->tracer, actor->target);
+}
+
+void A_MonsterProjectile(mobj_t *actor)
+{
+    if (!mbf21 || !actor->target || !actor->state->args[0])
+        return;
+
+    A_MonsterProjectileImpl(actor, actor->state->args[0], nulltype);
+}
+
+void A_MonsterProjectileNamed(mobj_t *actor)
+{
+    if (!mbf21 || !actor->target || !actor->state->args[0])
+        return;
+
+    namedtype_t type = LookupTypeIndex((name_t){actor->state->args[0]});
+
+    if(!type.index)
+        return;
+
+    A_MonsterProjectileImpl(actor, MT_NAMEDTYPE, type);
 }
 
 //

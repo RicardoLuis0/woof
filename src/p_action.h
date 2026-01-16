@@ -152,4 +152,9 @@ void A_CheckAmmo(struct player_s *, struct pspdef_s *);
 void A_RefireTo(struct player_s *, struct pspdef_s *);
 void A_GunFlashTo(struct player_s *, struct pspdef_s *);
 
+// [Jay] Declarate codepointers, takes name index (!!not named type index!!) instead of type id
+void A_SpawnObjectNamed(struct mobj_s *);
+void A_MonsterProjectileNamed(struct mobj_s *);
+void A_WeaponProjectileNamed(struct player_s *, struct pspdef_s *);
+
 #endif

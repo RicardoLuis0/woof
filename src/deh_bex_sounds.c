@@ -45,19 +45,18 @@ void DEH_InitSFX(void)
     num_sfx = NUMSFX;
     sfx_index = NUMSFX - 1;
 
-    array_grow(deh_soundnames, num_sfx);
+    array_grow_size(deh_soundnames, num_sfx);
     for (int i = 1; i < num_sfx; i++)
     {
         deh_soundnames[i] = S_sfx[i].name ? strdup(S_sfx[i].name) : NULL;
     }
 
-    array_grow(sfx_state, num_sfx);
-    memset(sfx_state, 0, num_sfx * sizeof(*sfx_state));
+    array_grow_size(sfx_state, num_sfx);
 }
 
 void DEH_FreeSFX(void)
 {
-    for (int i = 1; i < array_capacity(deh_soundnames); i++)
+    for (int i = 1; i < array_size(deh_soundnames); i++)
     {
         if (deh_soundnames[i])
         {
@@ -86,23 +85,22 @@ void DEH_SoundsEnsureCapacity(int limit)
     if (first_allocation)
     {
         S_sfx = NULL;
-        array_grow(S_sfx, old_num_sfx + limit);
+        array_grow_size(S_sfx, old_num_sfx + limit);
         memcpy(S_sfx, original_S_sfx, old_num_sfx * sizeof(*S_sfx));
         first_allocation = false;
     }
     else
     {
-        array_grow(S_sfx, limit);
+        array_grow_size(S_sfx, limit);
     }
 
-    num_sfx = array_capacity(S_sfx);
+    num_sfx = array_size(S_sfx);
     const int size_delta = num_sfx - old_num_sfx;
     memset(S_sfx + old_num_sfx, 0, size_delta * sizeof(*S_sfx));
 
     if (sfx_state)
     {
-        array_grow(sfx_state, size_delta);
-        memset(sfx_state + old_num_sfx, 0, size_delta * sizeof(*sfx_state));
+        array_grow_size(sfx_state, size_delta);
     }
 
     for (int i = old_num_sfx; i < num_sfx; ++i)
@@ -131,7 +129,7 @@ int DEH_SoundsGetIndex(const char *key, size_t length)
 
 int DEH_SoundsGetOriginalIndex(const char *key)
 {
-    for (int i = 1; i < array_capacity(deh_soundnames); ++i)
+    for (int i = 1; i < array_size(deh_soundnames); ++i)
     {
         if (deh_soundnames[i] && !strncasecmp(deh_soundnames[i], key, 6))
         {

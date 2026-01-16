@@ -40,6 +40,8 @@ set(WOOF_SOURCES
     deh_text.c
     deh_thing.c
     deh_weapon.c
+    declarate_parse.c      declarate_parse.h
+    declarate_extra.c      declarate_extra.h
     f_finale.c             f_finale.h
     f_wipe.c               f_wipe.h
     g_compatibility.c      g_compatibility.h

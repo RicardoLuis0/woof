@@ -761,13 +761,17 @@ static void P_KillMobj(mobj_t *source, mobj_t *inflictor, mobj_t *target, method
   // This determines the kind of object spawned
   // during the death frame of a thing.
 
-  if (target->info->droppeditem != MT_NULL)
+  namedtype_t namedtype = {TYPE_NULL};
+
+  if (!(target->info->droppeditem == MT_NAMEDTYPE && target->info->droppeditem_type.index == TYPE_NULL))
   {
     item = target->info->droppeditem;
+    namedtype = target->info->droppeditem_type;
+
   }
   else return;
 
-  mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item);
+  mo = P_SpawnMobj (target->x,target->y,ONFLOORZ, item, namedtype);
   mo->flags |= MF_DROPPED;    // special versions of items
 }
 
@@ -787,8 +791,8 @@ static void P_KillMobj(mobj_t *source, mobj_t *inflictor, mobj_t *target, method
 static boolean P_InfightingImmune(mobj_t *target, mobj_t *source)
 {
   return // not default behaviour, and same group
-    mobjinfo[target->type].infighting_group != IG_DEFAULT &&
-    mobjinfo[target->type].infighting_group == mobjinfo[source->type].infighting_group;
+    target->info->infighting_group != IG_DEFAULT &&
+    target->info->infighting_group == source->info->infighting_group;
 }
 
 void P_DamageMobjBy(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage, method_t mod)

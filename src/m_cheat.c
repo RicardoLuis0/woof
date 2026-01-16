@@ -443,7 +443,7 @@ static void cheat_god(void)
 
     // [crispy] spawn a teleport fog
     an = plyr->mo->angle >> ANGLETOFINESHIFT;
-    P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG);
+    P_SpawnMobj(plyr->mo->x+20*finecosine[an], plyr->mo->y+20*finesine[an], plyr->mo->z, MT_TFOG, nulltype);
     S_StartSoundEx(plyr->mo, sfx_slop);
     P_MapEnd();
 
